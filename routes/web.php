@@ -21,3 +21,6 @@ $router->get('/', function () use ($router) {
 
 Route::post('/cadastro', 'CadastroController@create');
 Route::post('/login', 'AuthController@login');
+
+Route::post('/get_otp', 'AuthController@getOTP');
+Route::post('/valid_otp', 'AuthController@validarOTP');
