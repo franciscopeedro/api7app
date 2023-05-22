@@ -20,3 +20,4 @@ $router->get('/', function () use ($router) {
 });
 
 Route::post('/cadastro', 'CadastroController@create');
+Route::post('/login', 'AuthController@login');
