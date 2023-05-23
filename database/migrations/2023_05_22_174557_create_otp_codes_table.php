@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+class CreateOtpCodesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -15,6 +15,8 @@ return new class extends Migration
     {
         Schema::create('otp_codes', function (Blueprint $table) {
             $table->id();
+            $table->string('telefone');
+            $table->string('otp_code');
             $table->timestamps();
         });
     }
@@ -28,4 +30,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('otp_codes');
     }
-};
+}

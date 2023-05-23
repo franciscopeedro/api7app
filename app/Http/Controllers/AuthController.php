@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Usuario;
+use Illuminate\Support\Facades\DB;
 use App\Models\Cadastro;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -23,8 +23,7 @@ class AuthController extends Controller
     {
         $this->validate($request, [
             'email' => 'required|email',
-            'senha' => 'required',
-            'telefone' => 'required'
+            'senha' => 'required'
         ]);
 
         $credentials = $request->only('email', 'senha');
@@ -42,13 +41,6 @@ class AuthController extends Controller
         return response()->json(['token' => $token]);
     }
 
-    /**
-     * Gera e salva o código OTP no banco de dados.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-
     public function getOTP(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -61,23 +53,27 @@ class AuthController extends Controller
 
         $telefone = $request->input('telefone');
 
-        // Generate OTP code (6-digit random number)
+        // Verificar se o número de telefone já está cadastrado
+        $cadastro = DB::table('cadastros')->where('telefone', $telefone)->first();
+
+        if ($cadastro) {
+            // O número de telefone já está cadastrado, redirecionar para a tela de login
+            return response()->json(['message' => 'Número de telefone já cadastrado. Faça login.']);
+        }
+
+        // Gerar código OTP aleatório
         $otpCode = mt_rand(100000, 999999);
 
-        // Save OTP code to the database for the user
-        $usuario = Usuario::where('telefone', $telefone)->first();
-        $usuario->otp_code = $otpCode;
-        $usuario->save();
+        // Salvar o código OTP no banco de dados
+        DB::table('otp_codes')->insert([
+            'telefone' => $telefone,
+            'otp_code' => $otpCode,
+        ]);
 
-        return response()->json(['message' => 'Código OTP gerado com sucesso'], 200);
+        // Aqui você pode enviar o código OTP para o usuário via SMS ou outro método de envio
+
+        return response()->json(['message' => 'Código OTP gerado com sucesso']);
     }
-
-    /**
-     * Valida o código OTP fornecido.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
 
     public function validarOTP(Request $request)
     {
@@ -93,15 +89,15 @@ class AuthController extends Controller
         $telefone = $request->input('telefone');
         $otpCode = $request->input('otp_code');
 
-        $usuario = Usuario::where('telefone', $telefone)->first();
+        $otp = DB::table('otp_codes')->where('telefone', $telefone)->first();
 
-        if (!$usuario) {
-            return response()->json(['error' => 'Usuário não encontrado'], 404);
+        if (!$otp) {
+            return response()->json(['error' => 'Número não cadastrado'], 404);
         }
 
-        if ($usuario->otp_code == $otpCode) {
-            // OTP code is valid
-            // Perform any additional actions you need here
+        if ($otp->otp_code == $otpCode) {
+            // Código OTP válido
+            // Execute qualquer ação adicional necessária aqui
 
             return response()->json(['message' => 'Código OTP validado com sucesso'], 200);
         }
